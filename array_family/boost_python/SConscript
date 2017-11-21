@@ -1,0 +1,66 @@
+import os
+op = os.path
+
+Import("env_scitbx_boost_python_ext", "env_etc")
+
+env = env_scitbx_boost_python_ext.Clone()
+env_etc.enable_more_warnings(env=env)
+env.SharedLibrary(target="regression_test_ext", source=[
+  "regression_test_ext.cpp",
+])
+
+try:
+  import numpy
+except ImportError:
+  numpy = None
+if (numpy is None):
+  npy_include = None
+else:
+  npy_include = op.join(op.dirname(numpy.__file__), "core", "include")
+  if (not op.isfile(op.join(npy_include, "numpy", "arrayobject.h"))):
+    npy_include = None
+if (npy_include is None):
+  env_npy = env
+else:
+  env_npy = env.Clone()
+  env_etc.include_registry.append(env=env_npy, paths=[npy_include])
+  env_npy.Append(SHCXXFLAGS=["-DSCITBX_HAVE_NUMPY_INCLUDE"])
+npy_bridge = env_npy.SharedObject(source="numpy_bridge.cpp")
+
+env.SharedLibrary(
+  target="#lib/scitbx_array_family_flex_ext",
+  source=[
+  "flex_ext.cpp",
+  "flex_grid.cpp",
+  "flex_bool.cpp",
+  "flex_size_t.cpp",
+  "flex_int.cpp",
+  "flex_long.cpp",
+  "flex_float.cpp",
+  "flex_double.cpp",
+  "flex_double_matrix.cpp",
+  "flex_complex_double.cpp",
+  "flex_std_string.cpp",
+  "flex_random.cpp",
+  "flex_sort.cpp",
+  "flex_histogram.cpp",
+  "flex_weighted_histogram.cpp",
+  "flex_mean_and_variance.cpp",
+  "flex_median.cpp",
+  "flex_linear_interpolation.cpp",
+  "flex_vec3_double.cpp",
+  "flex_vec2_double.cpp",
+  "flex_vec3_int.cpp",
+  "flex_sym_mat3_double.cpp",
+  "flex_mat3_double.cpp",
+  "flex_tiny_size_t_2.cpp",
+  "loops.cpp",
+  "show_sizes.cpp",
+  npy_bridge
+])
+
+env.SharedLibrary(
+  target="#lib/scitbx_array_family_shared_ext",
+  source=[
+  "shared_ext.cpp",
+])
